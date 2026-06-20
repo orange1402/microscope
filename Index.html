@@ -1,0 +1,3267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>複式顯微鏡模擬｜學習模式版</title>
+  <style>
+    :root {
+      --bg: #f6fbfb;
+      --bg-2: #f8f7f1;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-solid: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --line: #d8e4e3;
+      --line-2: #e9eeee;
+      --green: #3c8f77;
+      --green-soft: #e8f5ef;
+      --blue: #4b83c2;
+      --blue-soft: #edf5ff;
+      --lilac: #7c6fb0;
+      --lilac-soft: #f2effb;
+      --rose: #bc6f6f;
+      --rose-soft: #fff0ef;
+      --amber: #b9862c;
+      --amber-soft: #fff7e8;
+      --shadow: 0 8px 24px rgba(33, 43, 54, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(232,245,239,.95), transparent 36%),
+        radial-gradient(circle at bottom right, rgba(237,245,255,.95), transparent 34%),
+        linear-gradient(135deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      overflow: auto;
+    }
+
+    button,
+    select,
+    input { font-family: inherit; }
+
+    .app {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 10px;
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 1100;
+      display: grid;
+      grid-template-columns: minmax(210px, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.78);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 2vw, 30px);
+      letter-spacing: .02em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .top-actions,
+    .state-strip,
+    .concept-strip {
+      position: relative;
+      z-index: 1101;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .top-tools,
+    .top-info {
+      position: static;
+    }
+
+    .top-tools {
+      order: 1;
+    }
+
+    .top-info {
+      order: 2;
+    }
+
+    .top-tools > button,
+    .top-info > button {
+      position: relative;
+      z-index: 1103;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .top-tools.is-open > button,
+    .top-info.is-open > button {
+      border-color: #b7d9cc;
+      background: var(--green-soft);
+      color: #20705a;
+    }
+
+    .top-tools-panel,
+    .top-info-panel {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 14px;
+      z-index: 1102;
+      width: min(360px, calc(100vw - 28px));
+      display: none;
+    }
+
+    .top-info-panel {
+      width: min(430px, calc(100vw - 28px));
+      z-index: 1102;
+    }
+
+    .top-tools-panel {
+      z-index: 1102;
+    }
+
+    .top-tools.is-open .top-tools-panel,
+    .top-info.is-open .top-info-panel {
+      display: block;
+    }
+
+    .pill,
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 5px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.86);
+      color: #344054;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.main,
+    .badge.primary {
+      border-color: #b7d9cc;
+      background: var(--green-soft);
+      color: #20705a;
+    }
+
+    .main-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .workspace,
+    .sidebar {
+      min-height: 0;
+      overflow: visible;
+      scrollbar-width: thin;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 10px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .section-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      min-width: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-2);
+    }
+
+    .section-head h2,
+    .section-head h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .section-body {
+      padding: 12px;
+    }
+
+    .status-meters {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.65fr) minmax(110px, .7fr) minmax(120px, .75fr);
+      gap: 6px;
+    }
+
+    .meter-card {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 5px 8px;
+      border: 1px solid var(--line-2);
+      border-radius: 10px;
+      background: rgba(255,255,255,.72);
+    }
+
+    .meter-card small {
+      display: inline;
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .meter-card strong {
+      display: inline;
+      font-size: 15px;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .meter-card.formula strong {
+      font-size: 13px;
+      white-space: normal;
+      text-align: right;
+    }
+
+    .status-meters .bar {
+      display: none;
+    }
+
+    .workspace > .section-card:first-child .section-body {
+      padding: 7px;
+    }
+
+    .bar {
+      height: 7px;
+      margin-top: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e6eceb;
+    }
+
+    .bar span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+      transition: width .16s ease;
+    }
+
+    .observation-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(320px, .95fr) minmax(420px, 1.18fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .observe-card {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.66);
+      overflow: hidden;
+    }
+
+    .observe-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line-2);
+    }
+
+    .observe-head h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .observe-note,
+    .small-note,
+    .hint-line {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .observe-foot {
+      padding: 9px 12px;
+      border-top: 1px solid var(--line-2);
+      background: rgba(255,255,255,.48);
+    }
+
+    .stage-wrap {
+      position: relative;
+      width: 100%;
+      height: clamp(220px, 34vw, 320px);
+      min-height: 220px;
+      overflow: hidden;
+      border-radius: 0;
+      border: 0;
+      background:
+        linear-gradient(145deg, rgba(196, 212, 215, .88), rgba(154, 174, 184, .92));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.45);
+    }
+
+    .stage-wrap .nudge-pad {
+      position: absolute;
+      right: 10px;
+      bottom: 22px;
+      z-index: 9;
+      width: 118px;
+      gap: 3px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .stage-wrap .nudge-pad button {
+      min-height: 25px;
+      padding: 0 3px;
+      border-radius: 8px;
+      font-size: 12px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, .08);
+    }
+
+    .stage-specimen-control {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      z-index: 9;
+      display: grid;
+      grid-template-columns: auto minmax(120px, 160px);
+      gap: 5px;
+      align-items: center;
+      padding: 5px 7px;
+      border: 1px solid rgba(216,228,227,.9);
+      border-radius: 999px;
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
+      backdrop-filter: blur(8px);
+    }
+
+    .stage-specimen-control label {
+      margin: 0;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .stage-specimen-control select {
+      min-height: 26px;
+      padding: 3px 24px 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .stage-cross-h,
+    .stage-cross-v,
+    .stage-grid-h,
+    .stage-grid-v {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(255,255,255,.42);
+    }
+
+    .stage-cross-h { left: 0; top: 50%; width: 100%; height: 2px; transform: translateY(-50%); }
+    .stage-cross-v { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); }
+    .stage-grid-h { left: 0; width: 100%; height: 1px; opacity: .38; }
+    .stage-grid-v { top: 0; width: 1px; height: 100%; opacity: .38; }
+
+    .stage-center-circle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 86px;
+      height: 86px;
+      border: 2px solid rgba(255,255,255,.78);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .stage-label {
+      position: absolute;
+      left: 50%;
+      top: calc(50% + 50px);
+      transform: translateX(-50%);
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.68);
+      color: #475569;
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .hide-stage-guides .stage-cross-h,
+    .hide-stage-guides .stage-cross-v,
+    .hide-stage-guides .stage-grid-h,
+    .hide-stage-guides .stage-grid-v,
+    .hide-stage-guides .stage-center-circle,
+    .hide-stage-guides .stage-label { display: none; }
+
+    .slide {
+      position: absolute;
+      width: 170px;
+      height: 110px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      background: rgba(248, 250, 252, .88);
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      box-shadow: 0 5px 12px rgba(15, 23, 42, .16);
+      cursor: grab;
+      touch-action: none;
+      overflow: hidden;
+    }
+
+    .slide:active { cursor: grabbing; }
+
+    .cover-glass {
+      position: absolute;
+      left: 34px;
+      top: 20px;
+      width: 100px;
+      height: 70px;
+      border: 1px solid rgba(100,100,100,.35);
+      background: rgba(255,255,255,.16);
+    }
+
+    .specimen-layer,
+    .specimen-onion-raw,
+    .specimen-onion-blue,
+    .specimen-cheek-raw,
+    .specimen-cheek-blue {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .specimen-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: transparent;
+      transform: scale(.3);
+      transform-origin: center center;
+    }
+
+    .stage-clips {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 136px;
+      height: 130px;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .clip {
+      position: absolute;
+      top: 30px;
+      width: 18px;
+      height: 70px;
+      border-radius: 8px;
+      background: #374151;
+    }
+    .clip.left { left: 0; }
+    .clip.right { right: 0; }
+
+    .view-panel {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+      gap: 10px;
+      min-height: 0;
+      padding: 12px;
+      align-items: stretch;
+    }
+
+    .microscope-body-wrap {
+      position: relative;
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 10px 10px;
+      border: 1px solid var(--line-2);
+      border-radius: 16px;
+      background: rgba(248,250,252,.76);
+    }
+
+    .microscope {
+      position: relative;
+      width: 136px;
+      height: 300px;
+      transform: scale(1);
+      transform-origin: top center;
+      overflow: visible;
+    }
+
+    .microscope-controls {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      z-index: 24;
+      display: none;
+      gap: 8px;
+      width: min(92%, 360px);
+      transform: translateX(-50%);
+      padding: 8px;
+      border: 1px solid rgba(184, 213, 209, .95);
+      border-radius: 16px;
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .16);
+      backdrop-filter: blur(10px);
+    }
+
+    .microscope-controls.is-open {
+      display: grid;
+    }
+
+    .microscope-controls .control-group {
+      display: none;
+      margin: 0;
+      padding: 7px;
+      border: 1px solid var(--line-2);
+      border-radius: 12px;
+      background: rgba(255,255,255,.72);
+    }
+
+    .microscope-controls .control-group.is-visible,
+    .microscope-controls #basicControls {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .microscope-controls .control-group.is-visible {
+      display: grid;
+    }
+
+    .microscope-controls .control-unit {
+      display: none;
+    }
+
+    .microscope-controls .control-unit.is-visible {
+      display: grid;
+    }
+
+    .microscope-controls .range-block.control-unit.is-visible {
+      display: block;
+    }
+
+    .microscope-controls #basicControls .compact-row {
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 5px;
+    }
+
+    .microscope-controls .focus-light-controls {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .microscope-controls .range-block {
+      margin-bottom: 0;
+    }
+
+    .microscope-controls .range-row {
+      font-size: 11px;
+      margin-bottom: 1px;
+    }
+
+    .microscope-controls input[type="range"] {
+      height: 16px;
+      margin: 0;
+    }
+
+    .ocular-tube { position:absolute; left:50px; top:-16px; width:36px; height:72px; background:#374151; border-radius:12px 12px 7px 7px; transition:height .2s ease; }
+    .ocular-lens { position:absolute; left:56px; top:-28px; width:24px; height:14px; background:#111827; border-radius:10px; }
+    .head { position:absolute; left:42px; top:62px; width:52px; height:42px; background:#4b5563; border-radius:12px; }
+    .arm { position:absolute; left:25px; top:91px; width:58px; height:126px; border:13px solid #6b7280; border-right:none; border-bottom-left-radius:55px; border-top-left-radius:38px; transform:skewY(-8deg); }
+    .nosepiece { position:absolute; left:51px; top:114px; width:34px; height:17px; background:#4b5563; border-radius:10px; }
+    .objective { position:absolute; top:130px; width:12px; background:linear-gradient(180deg,#4b5563,#111827); border-radius:0 0 8px 8px; transition:height .2s ease; }
+    .objective.center { left:62px; }
+    .objective.left { left:44px; transform:rotate(22deg); transform-origin:top center; }
+    .objective.right { left:80px; transform:rotate(-22deg); transform-origin:top center; }
+    .stage-mini { position:absolute; left:34px; top:184px; width:72px; height:12px; background:#374151; border-radius:5px; transition:transform .15s ease; }
+    .focus-knob-big, .focus-knob-small { position:absolute; border-radius:50%; background:#6b7280; border:4px solid #4b5563; }
+    .focus-knob-big { left:4px; top:165px; width:36px; height:36px; }
+    .focus-knob-small { left:15px; top:176px; width:16px; height:16px; background:#9ca3af; }
+    .light-source { position:absolute; left:48px; bottom:28px; width:36px; height:12px; border-radius:50%; background:radial-gradient(circle, #fde68a 0%, #f59e0b 58%, #92400e 100%); box-shadow:0 0 14px rgba(245, 158, 11, .45); }
+    .base { position:absolute; left:12px; bottom:0; width:112px; height:30px; background:#4b5563; border-radius:50px 50px 12px 12px; }
+    .column { position:absolute; left:55px; bottom:26px; width:20px; height:76px; background:#9ca3af; border-radius:14px; }
+
+    [data-micro-control] {
+      cursor: pointer;
+    }
+
+    [data-micro-control]:hover,
+    [data-micro-control].is-active-control {
+      filter: drop-shadow(0 0 7px rgba(60,143,119,.75));
+    }
+
+    .view-section {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .microscope-view {
+      position: relative;
+      width: min(100%, 520px);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: #111827;
+      overflow: hidden;
+      border: 10px solid #334155;
+      box-shadow: inset 0 0 46px rgba(0,0,0,.42), 0 8px 18px rgba(15,23,42,.13);
+    }
+
+    .field {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at center,
+          rgba(255,255,255,.99) 0% 44%,
+          rgba(226,236,246,.97) 58%,
+          rgba(145,165,184,.34) 80%,
+          rgba(17,24,39,.98) 100%);
+    }
+
+    .field-content {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 170px;
+      height: 110px;
+      transform-origin: center center;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 1;
+      z-index: 2;
+    }
+
+    .light-mask {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .25);
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .crosshair-h,
+    .crosshair-v {
+      position: absolute;
+      background: rgba(30, 41, 59, .24);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .crosshair-h { top:50%; left:10%; width:80%; height:1px; transform:translateY(-50%); }
+    .crosshair-v { left:50%; top:10%; width:1px; height:80%; transform:translateX(-50%); }
+    .hide-crosshair .crosshair-h,
+    .hide-crosshair .crosshair-v { display: none; }
+
+    .eyepiece-pointer {
+      position: absolute;
+      left: 58.5%;
+      top: 41.5%;
+      z-index: 3;
+      width: 42.5%;
+      height: 8px;
+      background: rgba(31, 41, 55, .8);
+      clip-path: polygon(0 50%, 100% 0, 100% 100%);
+      transform: rotate(-45deg);
+      transform-origin: left center;
+      pointer-events: none;
+    }
+
+    .hide-eyepiece-pointer .eyepiece-pointer { display: none; }
+
+    .view-toolbar { width: 100%; }
+
+    .direction-note,
+    .hint-box,
+    .task-card {
+      border: 1px solid var(--line-2);
+      border-radius: 14px;
+      background: rgba(255,255,255,.70);
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .direction-note {
+      padding: 9px 11px;
+      border-color: #b9d9cc;
+      background: var(--green-soft);
+      color: #20705a;
+      font-weight: 700;
+    }
+
+    .hint-box {
+      margin-top: 8px;
+      padding: 9px 11px;
+    }
+
+    .control-block {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.82);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line-2);
+    }
+
+    .control-head h2,
+    .control-head h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .control-body {
+      padding: 10px;
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line-2);
+    }
+    .control-group:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+
+    label,
+    .group-label {
+      display: block;
+      margin-bottom: 6px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    select,
+    button {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      padding: 8px 10px;
+    }
+
+    select:focus,
+    button:focus,
+    input[type="range"]:focus {
+      outline: 3px solid rgba(60,143,119,.18);
+      outline-offset: 2px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button:hover { background: #f8fafc; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary-btn {
+      border-color: #b7d9cc;
+      background: var(--green-soft);
+      color: #20705a;
+    }
+
+    .select-grid,
+    .preset-grid,
+    .btn-row { display: grid; gap: 8px; }
+    .preset-grid,
+    .btn-row { grid-template-columns: 1fr 1fr; }
+
+    .preset-grid button {
+      min-height: 46px;
+      text-align: left;
+      padding: 9px 10px;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .preset-grid button:nth-child(1) { border-color: #b7d9cc; background: var(--green-soft); color: #20705a; }
+    .preset-grid button:nth-child(2) { border-color: #bdd4f0; background: var(--blue-soft); color: #315f9a; }
+    .preset-grid button:nth-child(3) { border-color: #efd9a9; background: var(--amber-soft); color: #8a601d; }
+    .preset-grid button:nth-child(4) { border-color: #e7c0c0; background: var(--rose-soft); color: #964b4b; }
+
+    .range-block { margin-bottom: 10px; }
+    .range-block:last-child { margin-bottom: 0; }
+    .range-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 3px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .mini-value { min-width: 34px; text-align: right; color: var(--muted); font-weight: 700; }
+    input[type="range"] { width: 100%; accent-color: var(--green); }
+
+    .nudge-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .nudge-pad button { min-height: 34px; padding: 0; }
+    .nudge-pad .blank { visibility: hidden; pointer-events: none; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0 0;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .toggle-row input { width: auto; margin: 0; }
+
+    .task-card {
+      padding: 12px;
+      background: rgba(255,255,255,.74);
+    }
+    .task-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .task-card ol {
+      margin: 0;
+      padding-left: 1.35em;
+    }
+    .task-card li { margin: 5px 0; }
+
+    .specimen-e-wrap { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+    .specimen-e { font-size:88px; font-weight:800; line-height:1; color:#111827; user-select:none; transform:translateX(-8px); }
+    .cell { position:absolute; border-radius:10px; border:2px solid rgba(70,85,110,.7); background:rgba(255,255,255,.18); }
+    .nucleus { position:absolute; border-radius:50%; }
+    .cheek-cell { position:absolute; border-radius:50% 42% 48% 44%; border:0.5px solid rgba(80,80,90,.62); background:rgba(255,225,215,.18); }
+
+
+
+    .compact-head-btn {
+      width: auto;
+      min-height: 32px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .is-hidden { display: none !important; }
+
+    .compact-controls {
+      display: grid;
+      gap: 8px;
+    }
+
+    .compact-row {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .compact-label,
+    .compact-row label {
+      margin: 0;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .compact-select {
+      min-height: 32px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 13px;
+    }
+
+    .native-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .seg-btn {
+      min-height: 32px;
+      padding: 4px 5px;
+      border-radius: 999px;
+      font-size: 13px;
+      line-height: 1;
+      background: #fff;
+    }
+
+    .seg-btn.is-active {
+      border-color: #b7d9cc;
+      background: var(--green-soft);
+      color: #20705a;
+      box-shadow: inset 0 0 0 1px rgba(60,143,119,.18);
+    }
+
+    .range-block.compact-range {
+      margin-bottom: 8px;
+    }
+
+    .range-block.compact-range .range-row {
+      margin-bottom: 1px;
+      font-size: 12px;
+    }
+
+    #studentControls {
+      box-shadow: var(--shadow);
+      background: rgba(248,252,251,.96);
+    }
+
+    #studentControls .control-body {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      align-items: start;
+      padding: 6px;
+    }
+
+    #studentControls .control-group {
+      min-width: 0;
+      height: 100%;
+      margin: 0;
+      padding: 6px;
+      border: 1px solid var(--line-2);
+      border-radius: 10px;
+      background: rgba(255,255,255,.72);
+    }
+
+    #studentControls .compact-tools-title {
+      margin-bottom: 1px;
+      font-size: 11px;
+    }
+
+    #studentControls .compact-select,
+    #studentControls .seg-btn,
+    #studentControls button {
+      min-height: 27px;
+      padding: 3px 6px;
+      font-size: 12px;
+    }
+
+    #studentControls .compact-select {
+      height: 27px;
+    }
+
+    #studentControls .segmented {
+      gap: 3px;
+    }
+
+    #studentControls .group-label {
+      margin-bottom: 3px;
+      font-size: 11px;
+    }
+
+    #studentControls .range-row {
+      font-size: 11px;
+    }
+
+    #studentControls input[type="range"] {
+      height: 16px;
+      margin: 0;
+    }
+
+    #studentControls .nudge-pad,
+    #studentControls .preset-grid,
+    #studentControls .btn-row {
+      gap: 3px;
+    }
+
+    #studentControls .nudge-pad button,
+    #studentControls .preset-grid button {
+      min-height: 27px;
+      padding: 2px 5px;
+      border-radius: 8px;
+    }
+
+    #studentControls .hint-line {
+      margin-top: 2px;
+      font-size: 10px;
+    }
+
+    #studentControls .toggle-row {
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 11px;
+    }
+
+    .learning-block .control-body {
+      padding: 10px;
+    }
+
+    .learning-panel {
+      display: grid;
+      gap: 9px;
+    }
+
+    .learning-summary {
+      position: sticky;
+      top: 0;
+      z-index: 12;
+      display: grid;
+      gap: 9px;
+      padding-bottom: 2px;
+      background: rgba(255,255,255,.96);
+    }
+
+    .learning-phase-panel {
+      display: grid;
+      gap: 9px;
+    }
+
+    .operation-guide {
+      padding: 9px 10px;
+      border: 1px dashed #b7d9cc;
+      border-radius: 13px;
+      background: rgba(232,245,239,.58);
+      color: #344054;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .go-answer-btn {
+      width: 100%;
+    }
+
+    .go-answer-btn:disabled {
+      opacity: .52;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .learning-progress {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .progress-line {
+      height: 7px;
+      flex: 1;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e6eceb;
+    }
+
+    .progress-line span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: var(--green);
+      transition: width .16s ease;
+    }
+
+    .learning-title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .learning-instruction,
+    .learning-question,
+    .learning-feedback,
+    .operation-status {
+      padding: 9px 10px;
+      border: 1px solid var(--line-2);
+      border-radius: 13px;
+      background: rgba(255,255,255,.70);
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .operation-status {
+      border-color: #efd9a9;
+      background: var(--amber-soft);
+      color: #7a571b;
+      font-weight: 800;
+    }
+
+    .operation-status.done {
+      border-color: #b7d9cc;
+      background: var(--green-soft);
+      color: #20705a;
+    }
+
+    .option-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .option-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 8px 9px;
+      border: 1px solid var(--line-2);
+      border-radius: 12px;
+      background: rgba(255,255,255,.72);
+      color: #344054;
+      font-size: 13px;
+      line-height: 1.45;
+      cursor: pointer;
+    }
+
+    .option-item input {
+      width: auto;
+      margin-top: 2px;
+      accent-color: var(--green);
+    }
+
+    .option-item.correct {
+      border-color: #b7d9cc;
+      background: var(--green-soft);
+    }
+
+    .option-item.wrong {
+      border-color: #e7c0c0;
+      background: var(--rose-soft);
+    }
+
+    .learning-feedback {
+      display: none;
+    }
+
+    .learning-feedback.show {
+      display: block;
+    }
+
+    .learning-feedback b {
+      color: #1f2937;
+    }
+
+    .learning-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .learning-actions .wide {
+      grid-column: 1 / -1;
+    }
+
+    .learning-highlight {
+      outline: 4px solid rgba(60,143,119,.32);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 8px rgba(60,143,119,.09), var(--shadow);
+      position: relative;
+      z-index: 8;
+    }
+
+    .microscope .learning-highlight {
+      filter: drop-shadow(0 0 6px rgba(60,143,119,.65));
+      outline: none;
+      box-shadow: none;
+    }
+
+    .part-glow {
+      filter: drop-shadow(0 0 8px rgba(60,143,119,.75));
+    }
+
+    .compact-tools-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .compact-tools-title span:last-child {
+      color: #20705a;
+    }
+
+
+
+    body.learning-active .task-card {
+      display: none;
+    }
+
+    body.learning-active .top-info.is-open .task-card {
+      display: block;
+    }
+
+    .learning-block {
+      flex: 0 0 auto;
+    }
+
+    body.learning-active .learning-block {
+      max-height: none;
+    }
+
+    body.learning-active .learning-panel {
+      max-height: none;
+      overflow: visible;
+      scrollbar-width: thin;
+    }
+
+    body.learning-active.learning-answer .learning-block {
+      max-height: none;
+    }
+
+    body.learning-active.learning-answer .learning-panel {
+      max-height: none;
+    }
+
+    body.learning-active .sidebar {
+      gap: 8px;
+    }
+
+    /* Three-workspace teaching layout. Existing controls keep their original IDs and handlers. */
+    .topbar {
+      grid-template-columns: 1fr;
+      padding: 8px 14px;
+    }
+
+    .topbar h1 {
+      font-size: clamp(18px, 2vw, 24px);
+    }
+
+    .page-subtitle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .top-actions {
+      display: none;
+    }
+
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .workspace-panel,
+    .bottom-controls,
+    .learning-block {
+      min-width: 0;
+      border: 1px solid #dbe7f3;
+      border-radius: 16px;
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+    }
+
+    .workspace-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .workspace-title,
+    .bottom-controls-title {
+      margin: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-2);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .stage-panel .stage-wrap {
+      flex: 1;
+      height: clamp(260px, 28vw, 360px);
+      min-height: 260px;
+    }
+
+    .stage-panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line-2);
+    }
+
+    .stage-panel-heading .workspace-title {
+      padding: 0;
+      border: 0;
+      white-space: nowrap;
+    }
+
+    .stage-panel-heading .stage-specimen-control {
+      position: static;
+      z-index: auto;
+      display: grid;
+      width: min(250px, 68%);
+      grid-template-columns: auto minmax(0, 1fr);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .stage-reference-note {
+      margin: 0;
+      padding: 7px 12px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .scope-panel .microscope-body-wrap {
+      flex: 1;
+      min-height: 0;
+      justify-content: flex-start;
+      padding: 12px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .scope-panel .microscope {
+      flex: 0 0 300px;
+    }
+
+    .scope-panel .microscope-controls {
+      position: static;
+      display: grid;
+      width: 100%;
+      min-height: 108px;
+      transform: none;
+      padding: 12px 14px;
+      border: 1px solid var(--line-2);
+      border-radius: 12px;
+      background: rgba(248,250,252,.8);
+      box-shadow: none;
+      backdrop-filter: none;
+      justify-items: center;
+      row-gap: 12px;
+    }
+
+    .scope-panel .microscope-controls .control-group {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      justify-self: center;
+      width: min(100%, 280px);
+    }
+
+    .scope-panel .microscope-controls .control-group.is-visible,
+    .scope-panel .microscope-controls #basicControls {
+      justify-items: center;
+    }
+
+    .structure-adjustment-title {
+      margin: 0;
+      justify-self: start;
+      align-self: start;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .structure-control-hint {
+      margin: 0;
+      align-self: center;
+      justify-self: center;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .scope-panel .microscope-controls:not(.is-open) {
+      grid-template-rows: auto 1fr;
+    }
+
+    .scope-panel .microscope-controls:not(.is-open) .structure-control-hint {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scope-panel .microscope-controls.is-open {
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .scope-panel .microscope-controls.is-open .control-group.is-visible {
+      align-self: center;
+    }
+
+    .scope-panel .microscope-controls.is-open .structure-control-hint {
+      display: none;
+    }
+
+    .field-panel .view-section {
+      flex: 1;
+      padding: 12px;
+      grid-template-rows: 1fr;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .field-panel .workspace-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .field-summary {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .field-panel .view-toolbar {
+      display: none;
+    }
+
+    .field-panel .microscope-view {
+      width: min(100%, 320px);
+    }
+
+    .field-panel .status-meters {
+      display: none;
+    }
+
+    .field-panel .meter-card {
+      padding: 6px 9px;
+    }
+
+    .bottom-controls {
+      margin-top: 16px;
+      padding: 10px 14px 12px;
+    }
+
+    .bottom-controls-title {
+      display: none;
+    }
+
+    .bottom-control-grid {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 0;
+    }
+
+    .bottom-control-grid > button,
+    .bottom-mode-row > button {
+      width: auto;
+      min-width: 116px;
+      min-height: 34px;
+      padding: 6px 14px;
+    }
+
+    .bottom-mode-row,
+    .bottom-guide-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bottom-inline-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .bottom-mode-row .preset-grid {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .bottom-mode-row .preset-grid button {
+      width: auto;
+      min-width: 104px;
+      min-height: 34px;
+      padding: 6px 12px;
+      text-align: center;
+    }
+
+    .bottom-mode-row .toggle-row,
+    .bottom-guide-row .toggle-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      white-space: nowrap;
+      font-size: 12px;
+      color: #475569;
+    }
+
+    .bottom-mode-row .toggle-row {
+      margin-left: 4px;
+    }
+
+    .bottom-mode-row .toggle-row:first-of-type {
+      margin-left: 12px;
+    }
+
+    .bottom-mode-row .toggle-row input,
+    .bottom-guide-row .toggle-row input {
+      margin: 0;
+    }
+
+    .bottom-simulation-settings,
+    .bottom-simulation-settings #studentControls,
+    .bottom-simulation-settings #studentControls .btn-row {
+      display: none;
+    }
+
+    .learning-block {
+      margin-top: 16px;
+      padding: 0;
+    }
+
+    .learning-block .control-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line-2);
+    }
+
+    .learning-block #learningToggleBtn {
+      display: none;
+    }
+
+    .learning-block .learning-panel {
+      padding: 14px;
+    }
+
+    .learning-summary {
+      position: static;
+    }
+
+
+    .topbar {
+      display: none !important;
+    }
+
+    .stage-instruction-note {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      z-index: 11;
+      max-width: calc(100% - 24px);
+      padding: 6px 10px;
+      border: 1px solid rgba(216, 228, 227, .92);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .82);
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    @media (max-width: 1100px) {
+      .workspace-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field-panel {
+        grid-column: 1 / -1;
+      }
+
+      .field-panel .view-section {
+        grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+        grid-template-rows: none;
+      }
+
+      .bottom-control-grid {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 1180px) {
+      body { overflow: auto; }
+      .app { height: auto; min-height: 100dvh; }
+      .topbar { grid-template-columns: minmax(210px, 1fr) auto; align-items: center; }
+      .top-actions { justify-content: flex-end; }
+      .main-grid { grid-template-columns: 1fr; }
+      .workspace, .sidebar { overflow: visible; }
+      .stage-wrap { height: 300px; min-height: 240px; }
+    }
+
+    @media (max-width: 760px) {
+      .app { padding: 8px; }
+      .status-meters { grid-template-columns: 1fr; }
+      #studentControls .control-body,
+      #studentControls .focus-light-controls,
+      #studentControls #basicControls {
+        grid-template-columns: 1fr;
+      }
+      #studentControls #basicControls,
+      #studentControls .focus-light-controls,
+      #studentControls .focus-light-controls .group-label {
+        grid-column: auto;
+      }
+      .view-panel { grid-template-columns: 1fr; }
+      .observation-grid { grid-template-columns: 1fr; }
+      .microscope-body-wrap {
+        display: flex;
+        min-height: 210px;
+        padding-top: 12px;
+      }
+      .microscope {
+        transform: scale(.72);
+      }
+      .microscope-controls #basicControls .compact-row {
+        grid-template-columns: 42px minmax(0, 1fr);
+      }
+      .preset-grid, .btn-row { grid-template-columns: 1fr; }
+      .top-actions { display: flex; }
+      .stage-wrap { height: 240px; min-height: 220px; }
+      .stage-wrap .nudge-pad { width: 112px; right: 8px; bottom: 20px; }
+      .microscope-view { width: min(100%, 440px); }
+    }
+
+    /* Responsive overrides for the three-workspace layout. */
+    #learningBlock {
+      display: none;
+    }
+
+    body.learning-active #learningBlock {
+      display: block;
+    }
+
+    @media (max-width: 1100px) {
+      .workspace-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field-panel {
+        grid-column: 1 / -1;
+      }
+
+      .field-panel .view-section {
+        grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+        grid-template-rows: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        padding: 8px 12px;
+      }
+
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-control-grid,
+      .bottom-mode-row,
+      .bottom-guide-row {
+        align-items: flex-start;
+      }
+
+      .field-panel {
+        grid-column: auto;
+      }
+
+      .field-panel .view-section {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+
+      .stage-panel .stage-wrap {
+        height: 260px;
+        min-height: 260px;
+      }
+
+      .scope-panel .microscope-body-wrap {
+        min-height: 0;
+      }
+
+      .scope-panel .microscope {
+        flex-basis: 230px;
+      }
+
+      .scope-panel .microscope-controls {
+        min-height: 92px;
+      }
+
+      .bottom-controls {
+        padding: 0 12px 12px;
+      }
+    }
+
+    /* Keep the microscope illustration proportional and reserve a dedicated control column. */
+    .scope-panel {
+      --scope-scale: .94;
+    }
+
+    .scope-panel .microscope-body-wrap {
+      display: grid;
+      grid-template-columns: minmax(150px, .85fr) minmax(0, 1.15fr);
+      grid-template-rows: minmax(330px, 1fr);
+      align-items: center;
+      gap: 12px;
+      min-height: 330px;
+      height: 100%;
+      padding: 12px;
+    }
+
+    .scope-panel .microscope {
+      flex: none;
+      align-self: center;
+      justify-self: center;
+      width: 136px;
+      height: 300px;
+      transform: scale(var(--scope-scale));
+      transform-origin: center center;
+    }
+
+    .scope-panel .microscope-controls {
+      align-self: stretch;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .scope-panel {
+        --scope-scale: .88;
+      }
+
+      .field-panel .view-section {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .scope-panel {
+        --scope-scale: .9;
+      }
+
+      .scope-panel .microscope-body-wrap {
+        display: grid;
+        grid-template-columns: minmax(160px, .8fr) minmax(0, 1.2fr);
+        grid-template-rows: minmax(310px, 1fr);
+        min-height: 330px;
+        padding: 10px;
+      }
+
+      .scope-panel .microscope {
+        flex-basis: auto;
+        transform: scale(var(--scope-scale));
+      }
+
+      .bottom-simulation-settings #studentControls .preset-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .bottom-simulation-settings #studentControls .control-group:last-child {
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <h1>複式顯微鏡模擬</h1>
+      </div>
+      <div class="top-actions" aria-label="核心概念">
+        <button id="learningTopBtn" class="primary-btn compact-head-btn" type="button">進入學習模式</button>
+        <div class="top-info">
+          <button class="pill top-panel-toggle" type="button">說明</button>
+          <section class="task-card top-info-panel">
+            <h3>課堂任務</h3>
+            <ol>
+              <li>先用字母 e 觀察倒像。</li>
+              <li>切換 4x、10x、40x，比較視野大小與亮度。</li>
+              <li>調整粗動、細動與光源，找出最清楚的視野。</li>
+              <li>比較未染色與亞甲藍染色標本的細胞核可見度。</li>
+            </ol>
+          </section>
+        </div>
+        <div class="top-tools">
+          <button class="pill top-panel-toggle" type="button">工具</button>
+          <div class="top-tools-panel">
+            <section class="control-block" id="studentControls">
+              <div class="control-body">
+                <section class="control-group">
+                  <div class="group-label">情境</div>
+                  <div class="preset-grid">
+                    <button data-preset="lowSearch">低倍找標本</button>
+                    <button data-preset="highObserve">高倍觀察</button>
+                    <button data-preset="darkField">模擬太暗</button>
+                    <button data-preset="blurred">模擬失焦</button>
+                  </div>
+                </section>
+
+                <section class="control-group">
+                  <div class="btn-row">
+                    <button id="resetBtn">重設</button>
+                    <button id="centerFocusBtn">焦距歸零</button>
+                  </div>
+                  <label class="toggle-row"><input type="checkbox" id="eyepiecePointerToggle" checked />顯示目鏡指針</label>
+                  <label class="toggle-row"><input type="checkbox" id="crosshairToggle" />顯示視野十字線</label>
+                  <label class="toggle-row"><input type="checkbox" id="stageGuideToggle" checked />顯示載物台對位線</label>
+                </section>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <section class="workspace" aria-label="觀察區">
+        <section class="section-card">
+          <div class="section-body">
+            <div class="status-meters">
+              <div class="meter-card formula"><small>總倍率</small><strong id="totalMagText">物鏡 10x × 目鏡 10x = 100倍</strong></div>
+              <div class="meter-card"><small>清晰度</small><strong id="focusScoreText">100%</strong><div class="bar"><span id="focusBar"></span></div></div>
+              <div class="meter-card"><small>視野亮度</small><strong id="brightnessText">中等</strong><div class="bar"><span id="brightnessBar"></span></div></div>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="section-card" style="min-height:0;">
+          <div class="section-head">
+            <h2>觀察區</h2>
+            <span class="pill">拖曳玻片，比較視野倒像</span>
+          </div>
+          <div class="section-body" style="min-height:0;">
+            <div class="observation-grid">
+              <section class="observe-card">
+                <div class="observe-head">
+                  <h3>載物台</h3>
+                  <span class="observe-note">實際移動玻片</span>
+                </div>
+                <div class="stage-wrap" id="stageWrap">
+                  <div class="stage-instruction-note">拖曳玻片並調整顯微鏡，觀察視野中的成像變化。</div>
+                  <div class="stage-specimen-control control-unit" id="specimenControl">
+                    <label for="specimenSelect">標本</label>
+                    <select id="specimenSelect" class="compact-select">
+                      <option value="e">字母 e</option>
+                      <option value="onion_raw">洋蔥原始</option>
+                      <option value="onion_blue">洋蔥染色</option>
+                      <option value="cheek_raw">口腔原始</option>
+                      <option value="cheek_blue">口腔染色</option>
+                    </select>
+                  </div>
+                  <div class="stage-grid-h" style="top:25%"></div>
+                  <div class="stage-grid-h" style="top:75%"></div>
+                  <div class="stage-grid-v" style="left:25%"></div>
+                  <div class="stage-grid-v" style="left:75%"></div>
+                  <div class="stage-cross-h"></div>
+                  <div class="stage-cross-v"></div>
+                  <div class="stage-center-circle"></div>
+                  
+                  <div class="stage-clips"><div class="clip left"></div><div class="clip right"></div></div>
+                  <div class="slide" id="slide" role="application" aria-label="可拖曳玻片">
+                    <div class="cover-glass"></div>
+                    <div class="specimen-layer"><div class="specimen-content" id="specimenContent"></div></div>
+                  </div>
+                  <div class="nudge-pad" aria-label="玻片方向控制">
+                    <button class="blank" tabindex="-1" aria-hidden="true"> </button>
+                    <button data-nudge="up">↑</button>
+                    <button class="blank" tabindex="-1" aria-hidden="true"> </button>
+                    <button data-nudge="left">←</button>
+                    <button class="primary-btn" id="centerBtn">中心</button>
+                    <button data-nudge="right">→</button>
+                    <button class="blank" tabindex="-1" aria-hidden="true"> </button>
+                    <button data-nudge="down">↓</button>
+                    <button class="blank" tabindex="-1" aria-hidden="true"> </button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="observe-card">
+                <div class="observe-head">
+                  <h3>顯微鏡視野</h3>
+                  <span class="observe-note">眼睛看到的結果</span>
+                </div>
+                <div class="view-panel">
+                  <div class="microscope-body-wrap">
+                    <div class="microscope" aria-label="顯微鏡示意圖">
+                      <div class="ocular-lens" data-micro-control="ocular" role="button" tabindex="0" aria-label="調整目鏡倍率"></div>
+                      <div class="ocular-tube" id="ocularTube" data-micro-control="ocular" role="button" tabindex="0" aria-label="調整目鏡倍率"></div>
+                      <div class="head"></div>
+                      <div class="arm"></div>
+                      <div class="nosepiece"></div>
+                      <div class="objective left" id="objectiveLeft" data-micro-control="objective" role="button" tabindex="0" aria-label="調整物鏡倍率"></div>
+                      <div class="objective center" id="objectiveCenter" data-micro-control="objective" role="button" tabindex="0" aria-label="調整物鏡倍率"></div>
+                      <div class="objective right" id="objectiveRight" data-micro-control="objective" role="button" tabindex="0" aria-label="調整物鏡倍率"></div>
+                      <div class="stage-mini" id="stageMini"></div>
+                      <div class="focus-knob-big" data-micro-control="focus" role="button" tabindex="0" aria-label="調整粗細調節輪"></div>
+                      <div class="focus-knob-small" data-micro-control="focus" role="button" tabindex="0" aria-label="調整粗細調節輪"></div>
+                      <div class="column"></div>
+                      <div class="light-source" id="lightSource" data-micro-control="light" role="button" tabindex="0" aria-label="調整光源"></div>
+                      <div class="base"></div>
+                    </div>
+                    <div class="microscope-controls">
+                      <p class="structure-adjustment-title">構造調整區</p>
+                      <p class="structure-control-hint">點選顯微鏡構造後可進行調整</p>
+                      <section class="control-group compact-controls" id="basicControls">
+                        <div class="compact-row control-unit" id="objectiveControl">
+                          <div class="compact-label">物鏡</div>
+                          <div class="segmented" aria-label="物鏡倍率">
+                            <button type="button" class="seg-btn" data-set-select="objectiveSelect" data-value="4">4x</button>
+                            <button type="button" class="seg-btn" data-set-select="objectiveSelect" data-value="10">10x</button>
+                            <button type="button" class="seg-btn" data-set-select="objectiveSelect" data-value="40">40x</button>
+                          </div>
+                          <select id="objectiveSelect" class="native-hidden" aria-hidden="true" tabindex="-1">
+                            <option value="4">4x 掃描</option>
+                            <option value="10" selected>10x 低倍</option>
+                            <option value="40">40x 高倍</option>
+                          </select>
+                        </div>
+
+                        <div class="compact-row control-unit" id="ocularControl">
+                          <div class="compact-label">目鏡</div>
+                          <div class="segmented" aria-label="目鏡倍率">
+                            <button type="button" class="seg-btn" data-set-select="ocularSelect" data-value="5">5x</button>
+                            <button type="button" class="seg-btn" data-set-select="ocularSelect" data-value="10">10x</button>
+                            <button type="button" class="seg-btn" data-set-select="ocularSelect" data-value="15">15x</button>
+                          </div>
+                          <select id="ocularSelect" class="native-hidden" aria-hidden="true" tabindex="-1">
+                            <option value="5">5x</option>
+                            <option value="10" selected>10x</option>
+                            <option value="15">15x</option>
+                          </select>
+                        </div>
+                      </section>
+
+                      <section class="control-group focus-light-controls">
+                        <div class="range-block compact-range control-unit" id="coarseControl">
+                          <div class="range-row"><span>粗調節輪</span><span class="mini-value" id="coarseValue">0</span></div>
+                          <input type="range" id="coarseFocus" min="-100" max="100" value="0" />
+                        </div>
+                        <div class="range-block compact-range control-unit" id="fineControl">
+                          <div class="range-row"><span>細調節輪</span><span class="mini-value" id="fineValue">0</span></div>
+                          <input type="range" id="fineFocus" min="-30" max="30" value="0" />
+                        </div>
+                        <div class="range-block compact-range control-unit" id="lightControlWrap">
+                          <div class="range-row"><span>光源</span><span class="mini-value" id="lightValue">50</span></div>
+                          <input type="range" id="lightControl" min="0" max="100" value="50" />
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+
+                  <div class="view-section">
+                    <div class="microscope-view" id="microscopeView">
+                      <div class="field" id="field">
+                        <div class="field-content" id="fieldContent"></div>
+                        <div class="light-mask" id="lightMask"></div>
+                        <div class="crosshair-h"></div>
+                        <div class="crosshair-v"></div>
+                      </div>
+                      <div class="eyepiece-pointer" aria-hidden="true"></div>
+                    </div>
+
+                    <div class="view-toolbar">
+                      <div class="direction-note" id="directionInfo">玻片位於中心；視野影像也位於中心。</div>
+                      <div class="hint-box" id="viewInfo"></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="sidebar" aria-label="控制與任務區">
+
+        <section class="control-block learning-block" id="learningBlock">
+          <div class="control-head">
+            <h2>學習模式</h2>
+            <button id="learningToggleBtn" class="primary-btn compact-head-btn" type="button">進入</button>
+          </div>
+          <div class="control-body learning-panel is-hidden" id="learningPanel">
+            <div class="learning-summary">
+              <div class="learning-progress">
+                <span id="learningCount">第 1 / 8 關</span>
+                <div class="progress-line"><span id="learningProgressBar"></span></div>
+              </div>
+              <h3 class="learning-title" id="learningTitle">學習任務</h3>
+              <div class="learning-instruction" id="learningInstruction"></div>
+            </div>
+
+            <div class="learning-phase-panel" id="operationPhasePanel">
+              <div class="operation-status" id="operationStatus">請先完成指定操作。</div>
+              <div class="operation-guide">所有顯微鏡功能都可以操作；綠色醒目區域是這一關建議優先嘗試的功能。</div>
+              <button id="goToAnswerBtn" class="primary-btn go-answer-btn" type="button" disabled>完成指定操作後前往作答</button>
+            </div>
+
+            <div class="learning-phase-panel is-hidden" id="answerPhasePanel">
+              <div class="learning-question" id="learningQuestion"></div>
+              <div class="option-list" id="learningOptions"></div>
+              <div class="learning-feedback" id="learningFeedback"></div>
+              <div class="learning-actions">
+                <button id="submitAnswerBtn" class="primary-btn wide" type="button">提交複選答案</button>
+                <button id="prevStepBtn" type="button">上一步</button>
+                <button id="nextStepBtn" type="button">下一步</button>
+              </div>
+            </div>
+            <button id="exitLearningBtn" class="wide" type="button">離開學習模式</button>
+          </div>
+        </section>
+
+        <section class="task-card">
+          <h3>課堂任務</h3>
+          <ol>
+            <li>先用字母 e 觀察倒像。</li>
+            <li>切換 4x、10x、40x，比較視野大小與亮度。</li>
+            <li>調整粗動、細動與光源，找出最清楚的視野。</li>
+            <li>比較未染色與亞甲藍染色標本的細胞核可見度。</li>
+          </ol>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const appRoot = document.querySelector(".app");
+    const mainGridEl = document.querySelector(".main-grid");
+    const sidebarEl = document.querySelector(".sidebar");
+    const learningBlockEl = document.getElementById("learningBlock");
+    const headerTitle = document.querySelector(".topbar h1");
+
+    const stageWrapEl = document.getElementById("stageWrap");
+    const microscopeBodyWrapEl = document.querySelector(".microscope-body-wrap");
+    const viewSectionEl = document.querySelector(".view-section");
+    const statusMetersEl = document.querySelector(".status-meters");
+    const specimenControlEl = document.getElementById("specimenControl");
+    const studentControlsEl = document.getElementById("studentControls");
+    const resetButtonEl = document.getElementById("resetBtn");
+    const learningButtonEl = document.getElementById("learningTopBtn");
+    if (learningButtonEl) learningButtonEl.textContent = "開啟學習模式";
+
+    const makeWorkspacePanel = (className, title) => {
+      const panel = document.createElement("section");
+      panel.className = `workspace-panel ${className}`;
+      const heading = document.createElement("h2");
+      heading.className = "workspace-title";
+      heading.textContent = title;
+      panel.append(heading);
+      return panel;
+    };
+
+    const workspaceGridEl = document.createElement("main");
+    workspaceGridEl.className = "workspace-grid";
+    workspaceGridEl.setAttribute("aria-label", "顯微鏡操作工作區");
+
+    const stagePanelEl = makeWorkspacePanel("stage-panel", "載物台");
+    const stageHeadingEl = document.createElement("div");
+    stageHeadingEl.className = "stage-panel-heading";
+    const stageTitleEl = stagePanelEl.querySelector(".workspace-title");
+    stageTitleEl?.replaceWith(stageHeadingEl);
+    stageHeadingEl.append(stageTitleEl, specimenControlEl);
+    stagePanelEl.append(stageWrapEl);
+    const stageReferenceNote = document.createElement("p");
+    stageReferenceNote.className = "stage-reference-note";
+    stageReferenceNote.textContent = "中央圓形與十字線可作為玻片對位參考。";
+    stagePanelEl.append(stageReferenceNote);
+
+    const scopePanelEl = makeWorkspacePanel("scope-panel", "複式顯微鏡");
+    scopePanelEl.append(microscopeBodyWrapEl);
+    const fieldPanelEl = makeWorkspacePanel("field-panel", "顯微鏡視野");
+    const fieldSummaryEl = document.createElement("span");
+    fieldSummaryEl.className = "field-summary";
+    fieldSummaryEl.id = "fieldSummary";
+    fieldSummaryEl.textContent = "載入視野狀態中";
+    fieldPanelEl.querySelector(".workspace-title")?.append(fieldSummaryEl);
+    fieldPanelEl.append(viewSectionEl, statusMetersEl);
+    workspaceGridEl.append(stagePanelEl, scopePanelEl, fieldPanelEl);
+
+    const bottomControlsEl = document.createElement("section");
+    bottomControlsEl.className = "bottom-controls";
+    const bottomGridEl = document.createElement("div");
+    bottomGridEl.className = "bottom-control-grid";
+
+    studentControlsEl.querySelector(".group-label").textContent = "任務模擬";
+    const presetLabels = {
+      lowSearch: "低倍找標本",
+      highObserve: "高倍觀察",
+      darkField: "太暗",
+      blurred: "失焦"
+    };
+    studentControlsEl.querySelectorAll("[data-preset]").forEach((button) => {
+      button.textContent = presetLabels[button.dataset.preset] || button.textContent;
+    });
+    resetButtonEl.classList.add("is-hidden");
+    document.getElementById("centerFocusBtn")?.classList.add("is-hidden");
+
+    const controlGroups = studentControlsEl.querySelectorAll(".control-group");
+    const presetGroupEl = controlGroups[0];
+    const toggleGroupEl = controlGroups[1];
+    const presetGridEl = presetGroupEl?.querySelector(".preset-grid");
+
+    const bottomModeRowEl = document.createElement("div");
+    bottomModeRowEl.className = "bottom-mode-row";
+    if (learningButtonEl) {
+      learningButtonEl.textContent = "學習模式";
+      bottomModeRowEl.append(learningButtonEl);
+    }
+    const modeLabelEl = document.createElement("span");
+    modeLabelEl.className = "bottom-inline-label";
+    modeLabelEl.textContent = "任務模擬：";
+    bottomModeRowEl.append(modeLabelEl);
+    presetGroupEl?.querySelector(".group-label")?.remove();
+    if (presetGridEl) bottomModeRowEl.append(presetGridEl);
+
+    toggleGroupEl?.querySelectorAll(".toggle-row").forEach((label) => bottomModeRowEl.append(label));
+
+    bottomGridEl.append(bottomModeRowEl);
+    bottomControlsEl.append(bottomGridEl);
+
+    if (mainGridEl) mainGridEl.replaceWith(workspaceGridEl);
+    appRoot?.append(bottomControlsEl, learningBlockEl);
+    sidebarEl?.remove();
+    const closeTopPanels = () => {
+      document.querySelector(".top-info")?.classList.remove("is-open");
+      document.querySelector(".top-tools")?.classList.remove("is-open");
+    };
+    document.querySelector(".top-actions")?.addEventListener("click", (event) => {
+      const button = event.target.closest(".top-info > button, .top-tools > button");
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const panel = button.parentElement;
+      const wasOpen = panel.classList.contains("is-open");
+      closeTopPanels();
+      if (!wasOpen) panel.classList.add("is-open");
+    });
+
+    const stageWrap = document.getElementById("stageWrap");
+    const slide = document.getElementById("slide");
+    const specimenContent = document.getElementById("specimenContent");
+    const fieldContent = document.getElementById("fieldContent");
+    const field = document.getElementById("field");
+    const lightMask = document.getElementById("lightMask");
+    const microscopeView = document.getElementById("microscopeView");
+
+    const specimenSelect = document.getElementById("specimenSelect");
+    const objectiveSelect = document.getElementById("objectiveSelect");
+    const ocularSelect = document.getElementById("ocularSelect");
+    const coarseFocus = document.getElementById("coarseFocus");
+    const fineFocus = document.getElementById("fineFocus");
+    const lightControl = document.getElementById("lightControl");
+    const crosshairToggle = document.getElementById("crosshairToggle");
+    const stageGuideToggle = document.getElementById("stageGuideToggle");
+    const eyepiecePointerToggle = document.getElementById("eyepiecePointerToggle");
+
+    const coarseValue = document.getElementById("coarseValue");
+    const fineValue = document.getElementById("fineValue");
+    const lightValue = document.getElementById("lightValue");
+
+    const viewInfo = document.getElementById("viewInfo");
+    const directionInfo = document.getElementById("directionInfo");
+    const fieldSummary = document.getElementById("fieldSummary");
+    const modePill = document.getElementById("modePill");
+
+    const totalMagText = document.getElementById("totalMagText");
+    const focusScoreText = document.getElementById("focusScoreText");
+    const focusBar = document.getElementById("focusBar");
+    const brightnessText = document.getElementById("brightnessText");
+    const brightnessBar = document.getElementById("brightnessBar");
+
+    const centerBtn = document.getElementById("centerBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const centerFocusBtn = document.getElementById("centerFocusBtn");
+
+    const microscopeBodyWrap = document.querySelector(".microscope-body-wrap");
+    const microscopeControls = document.querySelector(".microscope-controls");
+    const basicControls = document.getElementById("basicControls");
+    const focusLightControls = document.querySelector(".focus-light-controls");
+    const objectiveControl = document.getElementById("objectiveControl");
+    const ocularControl = document.getElementById("ocularControl");
+    const coarseControl = document.getElementById("coarseControl");
+    const fineControl = document.getElementById("fineControl");
+    const lightControlWrap = document.getElementById("lightControlWrap");
+
+    const ocularTube = document.getElementById("ocularTube");
+    const objectiveCenter = document.getElementById("objectiveCenter");
+    const objectiveLeft = document.getElementById("objectiveLeft");
+    const objectiveRight = document.getElementById("objectiveRight");
+    const stageMini = document.getElementById("stageMini");
+    const lightSource = document.getElementById("lightSource");
+
+
+    const learningTopBtn = document.getElementById("learningTopBtn");
+    const learningToggleBtn = document.getElementById("learningToggleBtn");
+    const learningPanel = document.getElementById("learningPanel");
+    const learningCount = document.getElementById("learningCount");
+    const learningProgressBar = document.getElementById("learningProgressBar");
+    const learningTitle = document.getElementById("learningTitle");
+    const learningInstruction = document.getElementById("learningInstruction");
+    const operationStatus = document.getElementById("operationStatus");
+    const learningQuestion = document.getElementById("learningQuestion");
+    const learningOptions = document.getElementById("learningOptions");
+    const learningFeedback = document.getElementById("learningFeedback");
+    const operationPhasePanel = document.getElementById("operationPhasePanel");
+    const answerPhasePanel = document.getElementById("answerPhasePanel");
+    const goToAnswerBtn = document.getElementById("goToAnswerBtn");
+    const studentControls = document.getElementById("studentControls");
+    const prevStepBtn = document.getElementById("prevStepBtn");
+    const nextStepBtn = document.getElementById("nextStepBtn");
+    const submitAnswerBtn = document.getElementById("submitAnswerBtn");
+    const exitLearningBtn = document.getElementById("exitLearningBtn");
+
+    let slideX = 0;
+    let slideY = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    let lastSlideX = 0;
+    let lastSlideY = 0;
+
+    let learningActive = false;
+    let learningStepIndex = 0;
+    let learningAnswered = false;
+    let learningInternalUpdate = false;
+    let learningPhase = "operation";
+    let currentStepHistory = new Set();
+
+    const learningSteps = [
+      {
+        id: "slide_reverse",
+        title: "移動玻片與倒像",
+        instruction: "請把玻片往右拖曳一段距離，或用右箭頭按鈕微調玻片。觀察載物台上的玻片方向，以及視野中的影像方向。",
+        target: ["#stageWrap", "#microscopeView"],
+        prepare() {
+          specimenSelect.value = "e";
+          objectiveSelect.value = "10";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "55";
+          updateSpecimen();
+          setSlidePosition(0, 0);
+        },
+        isOperated() { return slideX > 24 || currentStepHistory.has("slideRight"); },
+        question: "移動玻片後，哪些敘述正確？",
+        options: [
+          "玻片往右移時，視野中的影像會往左移。",
+          "這是因為複式顯微鏡看到的是上下左右相反的倒像。",
+          "玻片移動會直接改變總倍率。",
+          "如果希望視野中的影像往上，可以嘗試把玻片往下移。",
+          "視野影像與玻片一定同方向移動。"
+        ],
+        answers: [0, 1, 3],
+        explanation: "複式顯微鏡視野中的影像上下左右相反，所以移動玻片時，視野中的影像會往相反方向移動。"
+      },
+      {
+        id: "coarse_focus",
+        title: "粗動調節輪",
+        instruction: "請調整粗動調節，觀察顯微鏡示意圖中的載物台，以及視野中影像清晰度的變化。",
+        target: ["#coarseControl", "#stageMini", ".focus-knob-big"],
+        prepare() {
+          objectiveSelect.value = "10";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "55";
+          setSlidePosition(0, 0);
+          updateView();
+        },
+        isOperated() { return Math.abs(Number(coarseFocus.value)) >= 20 || currentStepHistory.has("coarse"); },
+        question: "關於粗動調節輪，哪些敘述正確？",
+        options: [
+          "載物台會有較明顯的上升或下降。",
+          "影像可能變清楚，也可能變模糊。",
+          "粗動調節輪主要用來快速接近焦點。",
+          "粗動調節輪會直接改變目鏡倍率。",
+          "高倍觀察時不適合大幅轉動粗動調節輪。"
+        ],
+        answers: [0, 1, 2, 4],
+        explanation: "粗動調節輪會讓載物台有較大幅度的上下移動，主要用來快速接近焦點；高倍觀察時應避免大幅轉動，以免物鏡碰到玻片。"
+      },
+      {
+        id: "fine_focus",
+        title: "細動調節輪",
+        instruction: "請調整細動調節，觀察影像清晰度是否變化。注意：雖然幅度很小，但載物台仍會有細微移動。",
+        target: ["#fineControl", "#stageMini", ".focus-knob-big", ".focus-knob-small"],
+        prepare() {
+          objectiveSelect.value = "40";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "90";
+          setSlidePosition(0, 0);
+          updateView();
+          openMicroscopeControl("focus");
+        },
+        isOperated() { return Math.abs(Number(fineFocus.value)) >= 6 || currentStepHistory.has("fine"); },
+        question: "關於細動調節輪，哪些敘述正確？",
+        options: [
+          "細動調節輪會讓載物台做小幅度移動。",
+          "細動調節輪可以用來微調影像清晰度。",
+          "細動調節輪通常比粗動調節輪更適合高倍觀察。",
+          "細動調節輪會直接改變物鏡倍率。",
+          "調整細動調節輪時，影像可能變清楚，也可能變模糊。"
+        ],
+        answers: [0, 1, 2, 4],
+        explanation: "細動調節輪也是調整焦距，但移動幅度較小，適合用在高倍鏡下微調清晰度。"
+      },
+      {
+        id: "objective_lens",
+        title: "物鏡倍率",
+        instruction: "請把物鏡從 4x 或 10x 切換到 40x，觀察視野大小、亮度、清晰度，以及物鏡長短。",
+        target: ["#objectiveControl", "#objectiveCenter", "#microscopeView"],
+        prepare() {
+          objectiveSelect.value = "4";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "60";
+          setSlidePosition(0, 0);
+          updateView();
+        },
+        isOperated() { return Number(objectiveSelect.value) === 40 || currentStepHistory.has("objective:40"); },
+        question: "物鏡倍率提高後，哪些敘述正確？",
+        options: [
+          "影像變大。",
+          "視野範圍變小。",
+          "視野可能變暗。",
+          "對焦容許範圍變小，比較容易模糊。",
+          "高倍率物鏡通常比較長。",
+          "看到的影像會變成正立。"
+        ],
+        answers: [0, 1, 2, 3, 4],
+        explanation: "物鏡倍率提高時，影像變大、視野變小、亮度降低，也更容易失焦。外觀上，高倍率物鏡通常較長。"
+      },
+      {
+        id: "ocular_lens",
+        title: "目鏡倍率",
+        instruction: "請改變目鏡倍率，觀察總倍率數字與顯微鏡上方目鏡長短的變化。",
+        target: ["#ocularControl", "#ocularTube"],
+        prepare() {
+          objectiveSelect.value = "10";
+          ocularSelect.value = "5";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "60";
+          setSlidePosition(0, 0);
+          updateView();
+        },
+        isOperated() { return Number(ocularSelect.value) >= 10 || currentStepHistory.has("ocular:10") || currentStepHistory.has("ocular:15"); },
+        question: "關於目鏡倍率，哪些敘述正確？",
+        options: [
+          "總倍率 = 目鏡倍率 × 物鏡倍率。",
+          "目鏡倍率提高時，總倍率會增加。",
+          "只改變目鏡倍率時，玻片位置不會因此移動。",
+          "高倍率目鏡通常比較短。",
+          "目鏡倍率提高時，影像一定會變得更清楚。",
+          "目鏡倍率和物鏡倍率都會影響總倍率。"
+        ],
+        answers: [0, 1, 2, 3, 5],
+        explanation: "目鏡與物鏡共同決定總倍率。提高目鏡倍率會增加總倍率，但不保證影像更清楚；外觀上，高倍率目鏡通常較短。"
+      },
+      {
+        id: "light_source",
+        title: "光源強度",
+        instruction: "請先降低光源，再提高光源。觀察視野亮度是否改變。",
+        target: ["#lightControlWrap", "#lightSource", "#microscopeView"],
+        prepare() {
+          objectiveSelect.value = "40";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "25";
+          setSlidePosition(0, 0);
+          updateView();
+        },
+        isOperated() { return Number(lightControl.value) >= 65 || currentStepHistory.has("light"); },
+        question: "關於光源強度，哪些敘述正確？",
+        options: [
+          "光源會影響視野亮暗。",
+          "光源太弱時，視野會變暗。",
+          "高倍率觀察時，通常需要較多光線。",
+          "調整光源會直接改變總倍率。",
+          "光源越強，影像一定越清楚。"
+        ],
+        answers: [0, 1, 2],
+        explanation: "光源主要影響視野亮暗。高倍率下視野常較暗，因此需要補光；但光源不是總倍率，也不是影像清晰度的唯一因素。"
+      },
+      {
+        id: "low_to_high",
+        title: "低倍到高倍的觀察順序",
+        instruction: "請先按 4x 找到標本並把它移到中心，再切換到 40x。也可以使用情境按鈕中的「低倍找標本」與「高倍觀察」。",
+        target: ["#objectiveControl", "#centerBtn", "#microscopeView"],
+        prepare() {
+          objectiveSelect.value = "4";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "55";
+          setSlidePosition(30, 20);
+          updateView();
+        },
+        isOperated() {
+          const usedLow = currentStepHistory.has("objective:4") || currentStepHistory.has("preset:lowSearch");
+          const usedHigh = currentStepHistory.has("objective:40") || currentStepHistory.has("preset:highObserve") || Number(objectiveSelect.value) === 40;
+          return usedLow && usedHigh;
+        },
+        question: "為什麼通常要先用低倍鏡觀察？哪些敘述正確？",
+        options: [
+          "低倍視野較大，比較容易找到標本。",
+          "先把標本移到視野中央，再切換高倍比較容易觀察。",
+          "高倍視野較小，若標本沒有在中央，可能會看不到。",
+          "切換高倍後，通常需要再微調焦距與光源。",
+          "低倍鏡一定比高倍鏡更清楚。"
+        ],
+        answers: [0, 1, 2, 3],
+        explanation: "顯微鏡觀察通常先低倍、後高倍。低倍視野較大，容易找到標本；切換高倍後視野變小，常需要微調焦距與光源。"
+      },
+      {
+        id: "stain_effect",
+        title: "染色標本",
+        instruction: "請把標本從洋蔥原始切換成洋蔥染色，觀察細胞核與細胞輪廓是否比較明顯。",
+        target: ["#specimenControl", "#microscopeView"],
+        prepare() {
+          specimenSelect.value = "onion_raw";
+          objectiveSelect.value = "40";
+          ocularSelect.value = "10";
+          coarseFocus.value = "0";
+          fineFocus.value = "0";
+          lightControl.value = "90";
+          setSlidePosition(0, 0);
+          updateSpecimen();
+        },
+        isOperated() { return specimenSelect.value === "onion_blue" || currentStepHistory.has("specimen:onion_blue"); },
+        question: "關於染色的效果，哪些敘述正確？",
+        options: [
+          "染色可以讓某些細胞構造更明顯。",
+          "亞甲藍可以幫助觀察細胞核。",
+          "染色會直接提高顯微鏡倍率。",
+          "染色可以增加構造與背景的對比。",
+          "染色後細胞實際大小會變大。"
+        ],
+        answers: [0, 1, 3],
+        explanation: "亞甲藍染色能增加對比，使細胞核等構造較容易看見；染色不會改變倍率，也不會讓細胞實際變大。"
+      }
+    ];
+
+    const objectiveData = {
+      4:  { lensHeight: 26, label: "掃描", baseBlurTolerance: 85, fieldLabel: "視野大、較亮，適合尋找標本。" },
+      10: { lensHeight: 40, label: "低倍", baseBlurTolerance: 48, fieldLabel: "視野中等，適合確認標本位置。" },
+      40: { lensHeight: 56, label: "高倍", baseBlurTolerance: 18, fieldLabel: "視野小且較暗，需要更仔細調焦與補光。" }
+    };
+
+    const ocularData = {
+      5:  { tubeHeight: 130, label: "5x 目鏡" },
+      10: { tubeHeight: 72, label: "10x 目鏡" },
+      15: { tubeHeight: 58, label: "15x 目鏡" }
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function setSlidePosition(x, y, fromUser = false) {
+      const maxX = Math.max(40, (stageWrap.clientWidth / 2) - 72);
+      const maxY = Math.max(35, (stageWrap.clientHeight / 2) - 52);
+      lastSlideX = slideX;
+      lastSlideY = slideY;
+      slideX = clamp(x, -maxX, maxX);
+      slideY = clamp(y, -maxY, maxY);
+      slide.style.left = `calc(50% + ${slideX}px)`;
+      slide.style.top = `calc(50% + ${slideY}px)`;
+      if (fromUser) {
+        recordLearningOperation("slide");
+        if (slideX > 24) recordLearningOperation("slideRight");
+        if (slideX < -24) recordLearningOperation("slideLeft");
+        if (slideY > 24) recordLearningOperation("slideDown");
+        if (slideY < -24) recordLearningOperation("slideUp");
+      }
+      updateView();
+    }
+
+    function createSpecimen(type) {
+      if (type === "e") {
+        return `
+          <div class="specimen-e-wrap">
+            <div class="specimen-e">e</div>
+          </div>
+        `;
+      }
+
+      if (type === "onion_raw") {
+        return `<div class="specimen-onion-raw">${createOnionCells(false)}</div>`;
+      }
+
+      if (type === "onion_blue") {
+        return `<div class="specimen-onion-blue" style="background: rgba(180,220,255,0.16);">${createOnionCells(true)}</div>`;
+      }
+
+      if (type === "cheek_raw") {
+        return `<div class="specimen-cheek-raw">${createCheekCells(false)}</div>`;
+      }
+
+      if (type === "cheek_blue") {
+        return `<div class="specimen-cheek-blue" style="background: rgba(175,205,255,0.18);">${createCheekCells(true)}</div>`;
+      }
+
+      return "";
+    }
+
+    function createOnionCells(stained) {
+      const cells = [];
+      const rows = 4;
+      const cols = 5;
+      const startX = 4;
+      const startY = 6;
+      const w = 30;
+      const h = 22;
+      const gapX = 1.5;
+      const gapY = 1.5;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const left = startX + c * (w + gapX);
+          const top = startY + r * (h + gapY);
+          const nucleusColor = stained ? "rgba(40, 70, 180, 0.82)" : "rgba(90, 90, 110, 0.04)";
+          const nucleusSize = stained ? 7 : 5;
+          const cellBg = stained ? "rgba(170, 210, 255, 0.26)" : "rgba(255,255,255,0.08)";
+          const borderColor = stained ? "rgba(70, 85, 110, 0.78)" : "rgba(70, 85, 110, 0.66)";
+
+          cells.push(`
+            <div class="cell" style="
+              left:${left}px;
+              top:${top}px;
+              width:${w}px;
+              height:${h}px;
+              background:${cellBg};
+              border-color:${borderColor};
+              border-radius:4px;
+            ">
+              <div class="nucleus" style="
+                left:${w/2 - nucleusSize/2}px;
+                top:${h/2 - nucleusSize/2}px;
+                width:${nucleusSize}px;
+                height:${nucleusSize}px;
+                background:${nucleusColor};
+              "></div>
+            </div>
+          `);
+        }
+      }
+      return cells.join("");
+    }
+
+    function createCheekCells(stained) {
+      const cells = [];
+      const positions = [
+        [18,18,34,25], [68,22,38,28], [110,16,34,26],
+        [30,54,40,30], [82,58,36,28], [120,56,32,25]
+      ];
+
+      positions.forEach((p) => {
+        const [left, top, w, h] = p;
+        const nucleusColor = stained ? "rgba(44, 62, 170, 0.82)" : "rgba(90, 90, 110, 0.035)";
+        const bg = stained ? "rgba(201, 222, 255, 0.38)" : "rgba(255, 225, 215, 0.18)";
+        const nucleusSize = stained ? 10 : 8;
+
+        cells.push(`
+          <div class="cheek-cell" style="
+            left:${left}px;
+            top:${top}px;
+            width:${w}px;
+            height:${h}px;
+            background:${bg};
+          ">
+            <div class="nucleus" style="
+              left:${w/2 - nucleusSize/2}px;
+              top:${h/2 - nucleusSize/2}px;
+              width:${nucleusSize}px;
+              height:${nucleusSize}px;
+              background:${nucleusColor};
+              position:absolute;
+            "></div>
+          </div>
+        `);
+      });
+
+      return cells.join("");
+    }
+
+    function updateSpecimen() {
+      const html = createSpecimen(specimenSelect.value);
+      specimenContent.innerHTML = html;
+      fieldContent.innerHTML = html;
+      updateView();
+    }
+
+    function updateLensAppearance() {
+      const obj = Number(objectiveSelect.value);
+      const ocu = Number(ocularSelect.value);
+      const objInfo = objectiveData[obj];
+      const ocuInfo = ocularData[ocu];
+
+      objectiveCenter.style.height = objInfo.lensHeight + "px";
+      objectiveLeft.style.height = "34px";
+      objectiveRight.style.height = "26px";
+      ocularTube.style.height = ocuInfo.tubeHeight + "px";
+    }
+
+    function getSpecimenName(type) {
+      const map = {
+        e: "字母 e",
+        onion_raw: "洋蔥表皮（原始）",
+        onion_blue: "洋蔥表皮（亞甲藍染色）",
+        cheek_raw: "口腔皮膜（原始）",
+        cheek_blue: "口腔皮膜（亞甲藍染色）"
+      };
+      return map[type] || type;
+    }
+
+    function getBrightnessLabel(score) {
+      if (score >= 76) return "明亮";
+      if (score >= 46) return "中等";
+      if (score >= 24) return "偏暗";
+      return "太暗";
+    }
+
+    function getFocusLabel(score) {
+      if (score >= 88) return "清楚";
+      if (score >= 60) return "略模糊";
+      if (score >= 35) return "模糊";
+      return "嚴重失焦";
+    }
+
+    function updateDirectionInfo() {
+      const threshold = 5;
+      const movedX = slideX - lastSlideX;
+      const movedY = slideY - lastSlideY;
+      const parts = [];
+
+      if (Math.abs(slideX) < threshold && Math.abs(slideY) < threshold) {
+        directionInfo.textContent = "玻片位於中心；視野影像也位於中心。";
+        return;
+      }
+
+      if (Math.abs(movedX) >= Math.abs(movedY) && Math.abs(movedX) > 0.5) {
+        parts.push(movedX > 0 ? "玻片剛往右移，視野影像往左移。" : "玻片剛往左移，視野影像往右移。");
+      } else if (Math.abs(movedY) > 0.5) {
+        parts.push(movedY > 0 ? "玻片剛往下移，視野影像往上移。" : "玻片剛往上移，視野影像往下移。");
+      }
+
+      if (parts.length === 0) {
+        const xText = slideX > 0 ? "右" : slideX < 0 ? "左" : "中央";
+        const yText = slideY > 0 ? "下" : slideY < 0 ? "上" : "中央";
+        parts.push(`玻片目前偏${yText}${xText}；視野影像會呈現相反方向。`);
+      }
+      directionInfo.textContent = parts.join(" ");
+    }
+
+    function updateView() {
+      const obj = Number(objectiveSelect.value);
+      const ocu = Number(ocularSelect.value);
+      const coarse = Number(coarseFocus.value);
+      const fine = Number(fineFocus.value);
+      const light = Number(lightControl.value);
+
+      coarseValue.textContent = coarse;
+      fineValue.textContent = fine;
+      lightValue.textContent = light;
+
+      const objInfo = objectiveData[obj];
+      const ocuInfo = ocularData[ocu];
+      const totalMagnification = obj * ocu;
+      const scale = totalMagnification / 20 * 0.42;
+      const offsetX = -slideX * scale;
+      const offsetY = -slideY * scale;
+
+      fieldContent.style.left = "50%";
+      fieldContent.style.top = "50%";
+      fieldContent.style.transformOrigin = "center center";
+      fieldContent.style.transform =
+        `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) scale(${-scale}, ${-scale})`;
+
+      const stagePosition = coarse + fine * 0.15;
+      const focusError = Math.abs(stagePosition);
+      const tolerance = objInfo.baseBlurTolerance;
+      let blurPx = 0;
+      let opacity = 1;
+
+      if (focusError > tolerance) {
+        blurPx = (focusError - tolerance) / 7;
+        opacity = Math.max(0.58, 1 - (focusError - tolerance) / 220);
+      }
+
+      let magnificationDarkness = 0;
+      if (totalMagnification <= 40) {
+        magnificationDarkness = 0.20;
+      } else if (totalMagnification <= 100) {
+        magnificationDarkness = 0.36;
+      } else if (totalMagnification <= 400) {
+        magnificationDarkness = 0.60;
+      } else {
+        magnificationDarkness = 0.74;
+      }
+
+      const userLightReduction = (light / 100) * 0.44;
+      let finalMaskOpacity = magnificationDarkness - userLightReduction;
+      finalMaskOpacity = clamp(finalMaskOpacity, 0.045, 0.82);
+
+      const focusScore = clamp(Math.round(100 - blurPx * 28), 8, 100);
+      const brightnessScore = clamp(Math.round((1 - finalMaskOpacity) * 100), 8, 100);
+
+      fieldContent.style.filter = `blur(${blurPx.toFixed(2)}px)`;
+      fieldContent.style.opacity = opacity;
+      lightMask.style.background = `rgba(0, 0, 0, ${finalMaskOpacity})`;
+
+      const stageShift = stagePosition * 0.18;
+      stageMini.style.transform = `translateY(${stageShift}px)`;
+
+      const focusLabel = getFocusLabel(focusScore);
+      const brightnessLabel = getBrightnessLabel(brightnessScore);
+      const atCenter = Math.abs(slideX) < 5 && Math.abs(slideY) < 5;
+      const xText = slideX > 0 ? "右" : slideX < 0 ? "左" : "中央";
+      const yText = slideY > 0 ? "下" : slideY < 0 ? "上" : "中央";
+      const positionLabel = atCenter ? "玻片：中心" : `玻片：偏${yText}${xText}`;
+
+      totalMagText.textContent = `物鏡 ${obj}x × 目鏡 ${ocu}x = ${totalMagnification}倍`;
+      focusScoreText.textContent = `${focusScore}%`;
+      focusBar.style.width = `${focusScore}%`;
+      brightnessText.textContent = brightnessLabel;
+      brightnessBar.style.width = `${brightnessScore}%`;
+      if (fieldSummary) fieldSummary.textContent = `${positionLabel}｜清晰度：${focusLabel}｜亮度：${brightnessLabel}`;
+
+      if (modePill) modePill.textContent = `目前：${objInfo.label}觀察`;
+
+      viewInfo.innerHTML = `
+        ${objInfo.fieldLabel}<br>
+        目前焦距位置：${stagePosition.toFixed(1)}；倍率越高，容許失焦範圍越小。<br>
+        染色標本中的細胞核較容易被看見；未染色標本則較接近透明狀態。
+      `;
+
+      microscopeView.classList.toggle("hide-crosshair", !crosshairToggle.checked);
+      microscopeView.classList.toggle("hide-eyepiece-pointer", !eyepiecePointerToggle.checked);
+      stageWrap.classList.toggle("hide-stage-guides", !stageGuideToggle.checked);
+
+      updateDirectionInfo();
+      updateLensAppearance();
+      syncSegmentButtons();
+      refreshLearningOperationStatus();
+    }
+
+
+    function syncSegmentButtons() {
+      document.querySelectorAll("[data-set-select]").forEach((button) => {
+        const select = document.getElementById(button.dataset.setSelect);
+        if (!select) return;
+        button.classList.toggle("is-active", select.value === button.dataset.value);
+      });
+    }
+
+    function clearLearningHighlights() {
+      document.querySelectorAll(".learning-highlight").forEach((el) => el.classList.remove("learning-highlight"));
+      document.querySelectorAll(".part-glow").forEach((el) => el.classList.remove("part-glow"));
+    }
+
+    function applyLearningHighlights(step) {
+      clearLearningHighlights();
+      if (!learningActive || !step) return;
+      step.target.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((el) => {
+          if (el.classList.contains("objective") || el.id === "ocularTube" || el.classList.contains("focus-knob-big") || el.classList.contains("focus-knob-small") || el.id === "stageMini" || el.id === "lightSource") {
+            el.classList.add("part-glow");
+          } else {
+            el.classList.add("learning-highlight");
+          }
+        });
+      });
+    }
+
+    function focusCurrentLearningControl(behavior = "smooth") {
+      if (!learningActive || learningPhase !== "operation") return;
+      const step = learningSteps[learningStepIndex];
+      const controlTarget = step.target
+        .map((selector) => document.querySelector(selector))
+        .find(Boolean);
+      (controlTarget || studentControls).scrollIntoView({ behavior, block: "start" });
+    }
+
+    function setLearningPhase(phase, options = {}) {
+      if (!learningActive) return;
+      if (phase === "answer" && !isCurrentStepOperated()) return;
+
+      learningPhase = phase;
+      const isOperation = phase === "operation";
+      document.body.classList.toggle("learning-operation", isOperation);
+      document.body.classList.toggle("learning-answer", !isOperation);
+      operationPhasePanel.classList.toggle("is-hidden", !isOperation);
+      answerPhasePanel.classList.toggle("is-hidden", isOperation);
+
+      if (options.scroll === true) {
+        requestAnimationFrame(() => {
+          if (isOperation) focusCurrentLearningControl(options.behavior || "smooth");
+          else learningPanel.scrollTo({ top: 0, behavior: options.behavior || "smooth" });
+        });
+      }
+    }
+
+    function startLearningMode() {
+      learningActive = true;
+      document.body.classList.add("learning-active");
+      learningStepIndex = 0;
+      learningPanel.classList.remove("is-hidden");
+      learningToggleBtn.textContent = "關閉學習模式";
+      learningTopBtn.textContent = "關閉學習模式";
+      loadLearningStep(0);
+    }
+
+    function exitLearningMode() {
+      learningActive = false;
+      document.body.classList.remove("learning-active", "learning-operation", "learning-answer");
+      learningPanel.classList.add("is-hidden");
+      learningToggleBtn.textContent = "開啟學習模式";
+      learningTopBtn.textContent = "開啟學習模式";
+      clearLearningHighlights();
+      updateView();
+    }
+
+    function loadLearningStep(index) {
+      learningStepIndex = clamp(index, 0, learningSteps.length - 1);
+      learningAnswered = false;
+      currentStepHistory = new Set();
+      const step = learningSteps[learningStepIndex];
+
+      learningInternalUpdate = true;
+      step.prepare();
+      learningInternalUpdate = false;
+
+      learningCount.textContent = `第 ${learningStepIndex + 1} / ${learningSteps.length} 關`;
+      learningProgressBar.style.width = `${((learningStepIndex + 1) / learningSteps.length) * 100}%`;
+      learningTitle.textContent = step.title;
+      learningInstruction.innerHTML = `<b>任務：</b>${step.instruction}`;
+      learningQuestion.innerHTML = `<b>複選題：</b>${step.question}`;
+      learningFeedback.classList.remove("show");
+      learningFeedback.innerHTML = "";
+
+      learningOptions.innerHTML = step.options.map((text, index) => `
+        <label class="option-item" data-option-index="${index}">
+          <input type="checkbox" value="${index}">
+          <span>${text}</span>
+        </label>
+      `).join("");
+
+      prevStepBtn.disabled = learningStepIndex === 0;
+      nextStepBtn.disabled = learningStepIndex === learningSteps.length - 1;
+      submitAnswerBtn.disabled = false;
+      applyLearningHighlights(step);
+      updateView();
+      refreshLearningOperationStatus();
+      setLearningPhase("operation", { scroll: false });
+    }
+
+    function recordLearningOperation(type) {
+      if (!learningActive || learningInternalUpdate) return;
+      currentStepHistory.add(type);
+      refreshLearningOperationStatus();
+    }
+
+    function isCurrentStepOperated() {
+      if (!learningActive) return false;
+      return learningSteps[learningStepIndex].isOperated();
+    }
+
+    function refreshLearningOperationStatus() {
+      if (!learningActive || !operationStatus) return;
+      const done = isCurrentStepOperated();
+      operationStatus.classList.toggle("done", done);
+      operationStatus.textContent = done ? "已偵測到指定操作，可以回答複選題。" : "請先完成指定操作，再回答複選題。";
+      goToAnswerBtn.disabled = !done;
+      goToAnswerBtn.textContent = done ? "前往作答" : "完成指定操作後前往作答";
+    }
+
+    function submitLearningAnswer() {
+      if (!learningActive) return;
+      const step = learningSteps[learningStepIndex];
+      if (!step.isOperated()) {
+        learningFeedback.classList.add("show");
+        learningFeedback.innerHTML = "<b>尚未完成操作。</b><br>請先依照任務調整指定構造，再提交答案。";
+        return;
+      }
+
+      const selected = Array.from(learningOptions.querySelectorAll("input:checked")).map((input) => Number(input.value));
+      const correct = new Set(step.answers);
+      const selectedSet = new Set(selected);
+      const missed = step.answers.filter((index) => !selectedSet.has(index));
+      const wrong = selected.filter((index) => !correct.has(index));
+      const rightSelected = selected.filter((index) => correct.has(index));
+      const isAllCorrect = missed.length === 0 && wrong.length === 0;
+
+      learningOptions.querySelectorAll(".option-item").forEach((item) => {
+        const index = Number(item.dataset.optionIndex);
+        item.classList.remove("correct", "wrong");
+        if (correct.has(index)) item.classList.add("correct");
+        if (wrong.includes(index)) item.classList.add("wrong");
+      });
+
+      const line = (indices) => indices.length
+        ? `<ul>${indices.map((index) => `<li>${step.options[index]}</li>`).join("")}</ul>`
+        : "<p>無</p>";
+
+      learningFeedback.classList.add("show");
+      learningFeedback.innerHTML = `
+        <b>${isAllCorrect ? "完全正確。" : "還可以再修正概念。"}</b><br>
+        <b>你選對的項目：</b>${line(rightSelected)}
+        <b>漏選的正確項目：</b>${line(missed)}
+        <b>誤選的項目：</b>${line(wrong)}
+        <b>概念整理：</b><br>${step.explanation}
+      `;
+      learningAnswered = true;
+    }
+
+    function moveLearningStep(delta) {
+      const nextIndex = clamp(learningStepIndex + delta, 0, learningSteps.length - 1);
+      loadLearningStep(nextIndex);
+    }
+
+    function getClientPos(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function startDrag(e) {
+      e.preventDefault();
+      dragging = true;
+      const pos = getClientPos(e);
+      startX = pos.x;
+      startY = pos.y;
+      initialX = slideX;
+      initialY = slideY;
+    }
+
+    function onDrag(e) {
+      if (!dragging) return;
+      e.preventDefault();
+      const pos = getClientPos(e);
+      const dx = pos.x - startX;
+      const dy = pos.y - startY;
+      setSlidePosition(initialX + dx, initialY + dy, true);
+    }
+
+    function endDrag() {
+      dragging = false;
+    }
+
+    function nudgeSlide(direction, step = 12) {
+      if (direction === "left") setSlidePosition(slideX - step, slideY, true);
+      if (direction === "right") setSlidePosition(slideX + step, slideY, true);
+      if (direction === "up") setSlidePosition(slideX, slideY - step, true);
+      if (direction === "down") setSlidePosition(slideX, slideY + step, true);
+    }
+
+    function applyPreset(name) {
+      recordLearningOperation(`preset:${name}`);
+      if (name === "lowSearch") {
+        objectiveSelect.value = "4";
+        ocularSelect.value = "10";
+        coarseFocus.value = "0";
+        fineFocus.value = "0";
+        lightControl.value = "45";
+        setSlidePosition(0, 0);
+      }
+
+      if (name === "highObserve") {
+        objectiveSelect.value = "40";
+        ocularSelect.value = "10";
+        coarseFocus.value = "0";
+        fineFocus.value = "0";
+        lightControl.value = "90";
+        setSlidePosition(0, 0);
+      }
+
+      if (name === "darkField") {
+        objectiveSelect.value = "40";
+        ocularSelect.value = "15";
+        lightControl.value = "20";
+      }
+
+      if (name === "blurred") {
+        coarseFocus.value = "75";
+        fineFocus.value = "18";
+      }
+
+      recordLearningOperation(`objective:${objectiveSelect.value}`);
+      recordLearningOperation(`ocular:${ocularSelect.value}`);
+      updateView();
+    }
+
+    slide.addEventListener("mousedown", startDrag);
+    slide.addEventListener("touchstart", startDrag, { passive: false });
+    window.addEventListener("mousemove", onDrag);
+    window.addEventListener("touchmove", onDrag, { passive: false });
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("touchend", endDrag);
+
+    specimenSelect.addEventListener("change", () => {
+      recordLearningOperation("specimen");
+      recordLearningOperation(`specimen:${specimenSelect.value}`);
+      updateSpecimen();
+    });
+    objectiveSelect.addEventListener("change", () => {
+      recordLearningOperation("objective");
+      recordLearningOperation(`objective:${objectiveSelect.value}`);
+      updateView();
+    });
+    ocularSelect.addEventListener("change", () => {
+      recordLearningOperation("ocular");
+      recordLearningOperation(`ocular:${ocularSelect.value}`);
+      updateView();
+    });
+    coarseFocus.addEventListener("input", () => {
+      recordLearningOperation("coarse");
+      updateView();
+    });
+    fineFocus.addEventListener("input", () => {
+      recordLearningOperation("fine");
+      updateView();
+    });
+    lightControl.addEventListener("input", () => {
+      recordLearningOperation("light");
+      updateView();
+    });
+    crosshairToggle.addEventListener("change", updateView);
+    stageGuideToggle.addEventListener("change", updateView);
+    eyepiecePointerToggle.addEventListener("change", updateView);
+
+    document.querySelectorAll("[data-set-select]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const select = document.getElementById(button.dataset.setSelect);
+        if (!select) return;
+        select.value = button.dataset.value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    });
+
+    const microControlMap = {
+      objective: { group: basicControls, units: [objectiveControl] },
+      ocular: { group: basicControls, units: [ocularControl] },
+      focus: { group: focusLightControls, units: [coarseControl, fineControl] },
+      light: { group: focusLightControls, units: [lightControlWrap] }
+    };
+    let activeMicroscopeControl = "";
+
+    function closeMicroscopeControls() {
+      microscopeControls?.classList.remove("is-open");
+      activeMicroscopeControl = "";
+      [basicControls, focusLightControls].forEach((group) => group?.classList.remove("is-visible"));
+      [objectiveControl, ocularControl, coarseControl, fineControl, lightControlWrap].forEach((unit) => unit?.classList.remove("is-visible"));
+      document.querySelectorAll("[data-micro-control].is-active-control").forEach((part) => part.classList.remove("is-active-control"));
+    }
+
+    function openMicroscopeControl(type) {
+      const config = microControlMap[type];
+      if (!config || !microscopeControls) return;
+      if (microscopeControls.classList.contains("is-open") && activeMicroscopeControl === type) {
+        closeMicroscopeControls();
+        return;
+      }
+      activeMicroscopeControl = type;
+      microscopeControls.classList.add("is-open");
+      [basicControls, focusLightControls].forEach((group) => group?.classList.remove("is-visible"));
+      [objectiveControl, ocularControl, coarseControl, fineControl, lightControlWrap].forEach((unit) => unit?.classList.remove("is-visible"));
+      config.group?.classList.add("is-visible");
+      config.units.forEach((unit) => unit?.classList.add("is-visible"));
+      document.querySelectorAll("[data-micro-control].is-active-control").forEach((part) => part.classList.remove("is-active-control"));
+      document.querySelectorAll(`[data-micro-control="${type}"]`).forEach((part) => part.classList.add("is-active-control"));
+    }
+
+    document.querySelectorAll("[data-micro-control]").forEach((part) => {
+      part.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openMicroscopeControl(part.dataset.microControl);
+      });
+      part.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        openMicroscopeControl(part.dataset.microControl);
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!microscopeBodyWrap || microscopeBodyWrap.contains(event.target)) return;
+      closeMicroscopeControls();
+    });
+
+    document.querySelectorAll("[data-nudge]").forEach((button) => {
+      button.addEventListener("click", () => nudgeSlide(button.dataset.nudge));
+    });
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+
+    centerBtn.addEventListener("click", () => { recordLearningOperation("center"); setSlidePosition(0, 0, true); });
+
+    centerFocusBtn.addEventListener("click", () => {
+      coarseFocus.value = "0";
+      fineFocus.value = "0";
+      updateView();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      specimenSelect.value = "e";
+      objectiveSelect.value = "10";
+      ocularSelect.value = "10";
+      coarseFocus.value = "0";
+      fineFocus.value = "0";
+      lightControl.value = "50";
+      crosshairToggle.checked = false;
+      stageGuideToggle.checked = true;
+      eyepiecePointerToggle.checked = true;
+      setSlidePosition(0, 0);
+      updateSpecimen();
+      updateView();
+    });
+
+    learningToggleBtn.addEventListener("click", () => {
+      if (learningActive) exitLearningMode();
+      else startLearningMode();
+    });
+
+    learningTopBtn.addEventListener("click", () => {
+      if (learningActive) exitLearningMode();
+      else startLearningMode();
+    });
+
+    exitLearningBtn.addEventListener("click", exitLearningMode);
+    goToAnswerBtn.addEventListener("click", () => setLearningPhase("answer"));
+    submitAnswerBtn.addEventListener("click", submitLearningAnswer);
+    prevStepBtn.addEventListener("click", () => moveLearningStep(-1));
+    nextStepBtn.addEventListener("click", () => moveLearningStep(1));
+
+    window.addEventListener("keydown", (event) => {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (["input", "select", "textarea", "button"].includes(activeTag)) return;
+      if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const step = event.shiftKey ? 24 : 10;
+      if (event.key === "ArrowUp") nudgeSlide("up", step);
+      if (event.key === "ArrowDown") nudgeSlide("down", step);
+      if (event.key === "ArrowLeft") nudgeSlide("left", step);
+      if (event.key === "ArrowRight") nudgeSlide("right", step);
+    });
+
+    window.addEventListener("resize", () => setSlidePosition(slideX, slideY));
+
+    updateSpecimen();
+    setSlidePosition(0, 0);
+    updateView();
+  </script>
+</body>
+</html>
